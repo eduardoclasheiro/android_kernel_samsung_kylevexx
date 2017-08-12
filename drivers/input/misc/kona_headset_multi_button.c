@@ -102,7 +102,7 @@
 #define WAKE_LOCK_TIME				(HZ * 5)	/* 5 sec */
 #define SEND_END_WAKE_LOCK_TIME			(HZ * 2)	/* 2 sec */
 
-#if defined(CONFIG_MACH_HAWAII_SS_CS02) || defined(CONFIG_MACH_HAWAII_SS_KYLEPRO) || defined(CONFIG_MACH_HAWAII_SS_KYLEPRODS)
+#if defined(CONFIG_MACH_HAWAII_SS_CS02) || defined(CONFIG_MACH_HAWAII_SS_KYLEVE) || defined(CONFIG_MACH_HAWAII_SS_KYLEPRODS)
 	#define COMP1_THRESHOLD (650)
 #else
 	#define COMP1_THRESHOLD (790)
@@ -150,7 +150,7 @@
 #define HEADPHONE_DETECT_LEVEL_MAX      680
 
 #if defined (CONFIG_MACH_HAWAII_SS_LOGAN) || defined(CONFIG_MACH_HAWAII_SS_LOGANDS)\
-|| defined(CONFIG_MACH_HAWAII_SS_HEAT)
+|| defined(CONFIG_MACH_HAWAII_SS_KYLEPRO) || defined(CONFIG_MACH_HAWAII_SS_KYLEVE)
 #define HEADPHONE_DETECT_LEVEL_MAX_2_8      691 // ref. 691 @ 2.1 V
 #define BASIC_HEADSET_DETECT_LEVEL_MIN_2_8  HEADPHONE_DETECT_LEVEL_MAX_2_8
 #endif
@@ -306,9 +306,9 @@ static const CHAL_ACI_filter_config_comp_t comp_values_for_button_press = {
 	0,			/* = S */
 	0xFE,			/* = T */
 #if defined (CONFIG_MACH_HAWAII_SS_LOGAN) || defined(CONFIG_MACH_HAWAII_SS_LOGANDS)\
- || defined(CONFIG_MACH_HAWAII_SS_KYLEVE) || defined(CONFIG_MACH_HAWAII_SS_HEAT)
+  || defined(CONFIG_MACH_HAWAII_SS_HEAT)
 	0xA00,			/* = M = 2560 / 32768 => 78ms */
-#elif defined(CONFIG_MACH_HAWAII_SS_CS02) || defined(CONFIG_MACH_HAWAII_SS_KYLEPRO) || defined(CONFIG_MACH_HAWAII_SS_KYLEPRODS)/* CONFIG_MACH_HAWAII_SS_LOGAN */
+#elif defined(CONFIG_MACH_HAWAII_SS_CS02) || defined(CONFIG_MACH_HAWAII_SS_KYLEPRO) || defined(CONFIG_MACH_HAWAII_SS_KYLEPRODS) || defined(CONFIG_MACH_HAWAII_SS_KYLEVE)/* CONFIG_MACH_HAWAII_SS_LOGAN */
 	0x500,			/* = M = 1280 / 32768 => 39ms */
 #else
 	0x500,
@@ -2967,7 +2967,7 @@ goto err1;
 		}
 	}
 #if defined(CONFIG_PMICLDO_MICBIAS)
-	pr_info("[%s] ONLY PMICLDO_MICBIAS \n", \__func__ );
+	pr_info("[%s] ONLY PMICLDO_MICBIAS \n", __func__ );
 	micbias_regulator = regulator_get(NULL, "gpldo1_uc");
 
 	if (IS_ERR(micbias_regulator)){

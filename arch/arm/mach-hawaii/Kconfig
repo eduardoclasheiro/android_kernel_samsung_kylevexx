@@ -359,6 +359,12 @@ config	MACH_HAWAII_SS_CS02
 	help
 	  Support for the Broadcom Hawaii Samsung CS02 board.
 
+config	MACH_HAWAII_SS_KYLEVE
+	bool "Support Broadcom Hawaii Samsung KYLEVE board"
+	default n
+	help
+	  Support for the Broadcom Hawaii Samsung KYLEVE board.
+
 config	MACH_HAWAII_SS_KYLEPRO
 	bool "Support Broadcom Hawaii Samsung KYLEPRO board"
 	default n

@@ -29,7 +29,7 @@
 
 #if IST30XX_INTERNAL_BIN
 #include "./Imagis/ist30xx_fw_kyle-ve.h"
-#include "./Imagis/ist30xxb_fw_kyle_pro_Ver0004.h"
+#include "./Imagis/ist30xxb_fw_kyle_ve_Ver0036.h"
 
 const u8 *ts_fw = ist30xx_fw;
 const u8 *ts_param = ist30xx_param;
