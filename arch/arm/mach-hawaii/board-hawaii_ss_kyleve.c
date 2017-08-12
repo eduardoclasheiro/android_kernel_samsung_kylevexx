@@ -70,11 +70,6 @@
 #include <mach/hardware.h>
 #include <mach/kona_headset_pd.h>
 #include <mach/kona.h>
-#if defined(CONFIG_BCM2079X_NFC_I2C)
-#include <linux/nfc/bcm2079x.h>
-//different with capri directory tree
-//#include <bcm2079x_nfc_settings.h>
-#endif
 #include <mach/sdio_platform.h>
 #include <mach/hawaii.h>
 #include <mach/io_map.h>
@@ -125,7 +120,11 @@
 #include <linux/broadcom/bcmbt_lpm.h>
 #endif
 
-#if defined  (CONFIG_SENSORS_BMC150)
+#if defined(CONFIG_BCMI2CNFC)
+#include <linux/bcmi2cnfc.h>
+#endif
+
+#if defined  (CONFIG_SENSORS_BMC150) || (CONFIG_SENSORS_BMA2X2)
 #include <linux/bst_sensor_common.h>
 #endif
 
@@ -296,8 +295,8 @@ int reset_pwm_padcntrl(void)
 	struct pin_config new_pin_config;
 	int ret;
 	new_pin_config.name = PN_GPIO24;
-	//new_pin_config.func = PF_GPIO24;
-	new_pin_config.func = PF_PWM2;
+	new_pin_config.func = PF_GPIO24;
+	//new_pin_config.func = PF_PWM2;
 	ret = pinmux_set_pin_config(&new_pin_config);
 	return ret;
 }
@@ -366,8 +365,8 @@ struct ion_platform_data ion_carveout_data = {
 			.id    = 3,
 			.type  = ION_HEAP_TYPE_CARVEOUT,
 			.name  = "ion-carveout",
-			.base  = 0xa0000000,
-			.limit = 0xb0000000,
+			.base  = 0x90000000,
+			.limit = 0xa0000000,
 			.size  = (0 * SZ_1M),
 #ifdef CONFIG_ION_OOM_KILLER
 			.lmk_enable = 0,
@@ -405,8 +404,8 @@ struct ion_platform_data ion_cma_data = {
 			.id = 2,
 			.type  = ION_HEAP_TYPE_DMA,
 			.name  = "ion-cma",
-			.base  = 0xa0000000,
-			.limit = 0xb0000000,
+			.base  = 0x90000000,
+			.limit = 0xa0000000,
 			.size  = (0 * SZ_1M),
 #ifdef CONFIG_ION_OOM_KILLER
 			.lmk_enable = 1,
@@ -441,15 +440,15 @@ struct mobicore_data mobicore_plat_data = {
 #endif
 
 #ifdef CONFIG_VIDEO_UNICAM_CAMERA
+#ifdef CONFIG_SOC_CAMERA_SR352
 
-#define S5K4ECGX_I2C_ADDRESS (0xAC>>1)
-#define SR030PC50_I2C_ADDRESS (0x60>>1)
+#define SR352_I2C_ADDRESS (0x40>>1)
 
 
 #define SENSOR_0_GPIO_PWRDN             (002)
 #define SENSOR_0_GPIO_RST               (111)
 #define SENSOR_0_CLK                    "dig_ch0_clk" /* DCLK1 */
-#define SENSOR_0_CLK_FREQ               (13000000)
+#define SENSOR_0_CLK_FREQ               (26000000)
 
 #define SENSOR_1_CLK                    "dig_ch0_clk" /* DCLK1 */
 #define SENSOR_1_CLK_FREQ               (26000000)
@@ -458,11 +457,9 @@ struct mobicore_data mobicore_plat_data = {
 
 static struct i2c_board_info hawaii_i2c_camera[] = {
 	{
-		I2C_BOARD_INFO("camdrv_ss", S5K4ECGX_I2C_ADDRESS),
+		I2C_BOARD_INFO("camdrv_ss", SR352_I2C_ADDRESS),
 	},
-	{
-		I2C_BOARD_INFO("camdrv_ss_sub", SR030PC50_I2C_ADDRESS),
-	},
+
 };
 
 static int hawaii_camera_power(struct device *dev, int on)
@@ -522,7 +519,65 @@ static int hawaii_camera_reset(struct device *dev)
 	return 0;
 }
 
-static int hawaii_camera_power_sub(struct device *dev, int on)
+
+static struct v4l2_subdev_sensor_interface_parms sr352_if_params = {
+	.if_type = V4L2_SUBDEV_SENSOR_SERIAL,
+	.if_mode = V4L2_SUBDEV_SENSOR_MODE_SERIAL_CSI2,
+	.orientation = V4L2_SUBDEV_SENSOR_ORIENT_90,
+	.facing = V4L2_SUBDEV_SENSOR_BACK,
+	.parms.serial = {
+		 .lanes = 1,
+		 .channel = 0,
+		 .phy_rate = 0,
+		 .pix_clk = 0,
+		 .hs_term_time = 0x2,
+	},
+};
+
+static struct soc_camera_link iclink_sr352 = {
+	.bus_id = 0,
+	.board_info = &hawaii_i2c_camera[0],
+	.i2c_adapter_id = 0,
+	.module_name = "camdrv_ss",
+	.power = &hawaii_camera_power,
+	.reset = &hawaii_camera_reset,
+	.priv =  &sr352_if_params,
+};
+
+static struct platform_device hawaii_camera = {
+	.name = "soc-camera-pdrv",
+	 .id = 0,
+	 .dev = {
+		 .platform_data = &iclink_sr352,
+	 },
+};
+
+
+#endif /* CONFIG_VIDEO_UNICAM_CAMERA */
+
+#ifdef CONFIG_SOC_CAMERA_SR300PC20
+
+#define SR300PC20_I2C_ADDRESS (0x40>>1)
+
+
+#define SENSOR_0_GPIO_PWRDN             (002)
+#define SENSOR_0_GPIO_RST               (111)
+#define SENSOR_0_CLK                    "dig_ch0_clk" /* DCLK1 */
+#define SENSOR_0_CLK_FREQ               (13000000)
+
+#define SENSOR_1_CLK                    "dig_ch0_clk" /* DCLK1 */
+#define SENSOR_1_CLK_FREQ               (26000000)
+
+#define SENSOR_1_GPIO_PWRDN             (005)
+
+static struct i2c_board_info hawaii_i2c_camera[] = {
+	{
+		I2C_BOARD_INFO("camdrv_ss", SR300PC20_I2C_ADDRESS),
+	},
+
+};
+
+static int hawaii_camera_power(struct device *dev, int on)
 {
 	static struct pi_mgr_dfs_node unicam_dfs_node;
 	int ret;
@@ -547,15 +602,17 @@ static int hawaii_camera_power_sub(struct device *dev, int on)
 		if (pi_mgr_dfs_request_update(&unicam_dfs_node, PI_OPP_TURBO)) {
 			printk(
 			KERN_ERR "%s:failed to update dfs request for unicam\n",
-			 __func__
+			__func__
 			);
 			return -1;
 		}
 	}
 
-	if (!camdrv_ss_power(1, (bool)on)) {
-		printk(KERN_ERR "%s, camdrv_ss_power failed for SUB CAM!!\n",
-		__func__);
+	if (!camdrv_ss_power(0, (bool)on)) {
+		printk(
+		KERN_ERR "%s,camdrv_ss_power failed for MAIN CAM!!\n",
+		__func__
+		);
 		return -1;
 	}
 
@@ -570,9 +627,7 @@ static int hawaii_camera_power_sub(struct device *dev, int on)
 
 	return 0;
 }
-
-
-static int hawaii_camera_reset_sub(struct device *dev)
+static int hawaii_camera_reset(struct device *dev)
 {
 	/* reset the camera gpio */
 	printk(KERN_INFO "%s:camera reset\n", __func__);
@@ -580,68 +635,42 @@ static int hawaii_camera_reset_sub(struct device *dev)
 
 }
 
-static struct v4l2_subdev_sensor_interface_parms s5k4ecgx_if_params = {
+
+static struct v4l2_subdev_sensor_interface_parms sr300pc20_if_params = {
 	.if_type = V4L2_SUBDEV_SENSOR_SERIAL,
 	.if_mode = V4L2_SUBDEV_SENSOR_MODE_SERIAL_CSI2,
 	.orientation = V4L2_SUBDEV_SENSOR_ORIENT_90,
 	.facing = V4L2_SUBDEV_SENSOR_BACK,
 	.parms.serial = {
-		 .lanes = 2,
+		 .lanes = 1,
 		 .channel = 0,
 		 .phy_rate = 0,
 		 .pix_clk = 0,
-		 .hs_term_time = 0x7
+		 .hs_term_time = 0x7,
+		     .hs_settle_time = 0x5
 	},
 };
 
-static struct soc_camera_link iclink_s5k4ecgx = {
+static struct soc_camera_link iclink_sr300pc20 = {
 	.bus_id = 0,
 	.board_info = &hawaii_i2c_camera[0],
 	.i2c_adapter_id = 0,
 	.module_name = "camdrv_ss",
 	.power = &hawaii_camera_power,
 	.reset = &hawaii_camera_reset,
-	.priv =  &s5k4ecgx_if_params,
+	.priv =  &sr300pc20_if_params,
 };
 
 static struct platform_device hawaii_camera = {
 	.name = "soc-camera-pdrv",
 	 .id = 0,
 	 .dev = {
-		 .platform_data = &iclink_s5k4ecgx,
+		 .platform_data = &iclink_sr300pc20,
 	 },
 };
 
-static struct v4l2_subdev_sensor_interface_parms sr030pc50_if_params = {
-	.if_type = V4L2_SUBDEV_SENSOR_SERIAL,
-	.if_mode = V4L2_SUBDEV_SENSOR_MODE_SERIAL_CSI2,
-	.orientation = V4L2_SUBDEV_SENSOR_ORIENT_270,
-	.facing = V4L2_SUBDEV_SENSOR_FRONT,
-	.parms.serial = {
-		.lanes = 1,
-		.channel = 1,
-		.phy_rate = 0,
-		.pix_clk = 0,
-		.hs_term_time = 0x7
-	},
-};
-static struct soc_camera_link iclink_sr030pc50 = {
-	.bus_id		= 0,
-	.board_info	= &hawaii_i2c_camera[1],
-	.i2c_adapter_id	= 0,
-	.module_name	= "camdrv_ss_sub",
-	.power		= &hawaii_camera_power_sub,
-	.reset		= &hawaii_camera_reset_sub,
-	.priv		= &sr030pc50_if_params,
-};
+#endif
 
-static struct platform_device hawaii_camera_sub = {
-	.name	= "soc-camera-pdrv",
-	.id		= 1,
-	.dev	= {
-		.platform_data = &iclink_sr030pc50,
-	},
-};
 #endif /* CONFIG_VIDEO_UNICAM_CAMERA */
 
 
@@ -885,7 +914,6 @@ struct platform_device *hawaii_common_plat_devices[] __initdata = {
 #ifdef CONFIG_VIDEO_UNICAM_CAMERA
 	&hawaii_camera_device,
 	&hawaii_camera,
-	&hawaii_camera_sub,
 #endif
 
 #ifdef CONFIG_SND_BCM_SOC
@@ -1048,13 +1076,22 @@ static struct i2c_board_info __initdata i2c_al3006_info[] = {
 #define ACC_INT_GPIO_PIN  92
 static struct bosch_sensor_specific bss_bma2x2 = {
 	.name = "bma2x2" ,
-        .place = 0,
+        .place = 4,
         .irq = ACC_INT_GPIO_PIN,        
 };
 
 static struct bosch_sensor_specific bss_bmm050 = {
 	.name = "bmm050" ,
-        .place = 0,
+        .place = 4,
+};
+#endif
+
+#if defined  (CONFIG_SENSORS_BMA2X2)
+#define ACC_INT_GPIO_PIN  92
+static struct bosch_sensor_specific bss_bma2x2 = {
+	.name = "bma2x2" ,
+        .place = 4,
+        .irq = ACC_INT_GPIO_PIN,        
 };
 #endif
 
@@ -1088,7 +1125,7 @@ static void gp2ap002_led_onoff(bool onoff)
                 if (IS_ERR(led_regulator)){
                     printk(KERN_ERR "[GP2A] can not get prox_regulator (SENSOR_LED_3.3V) \n");
                 } else {
-                    ret = regulator_set_voltage(led_regulator,3000000,3000000);
+                    ret = regulator_set_voltage(led_regulator,3300000,3300000);
                     printk(KERN_INFO "[GP2A] regulator_set_voltage : %d\n", ret);
                     ret = regulator_enable(led_regulator);
                     printk(KERN_INFO "[GP2A] regulator_enable : %d\n", ret);
@@ -1112,7 +1149,7 @@ static struct gp2ap002_platform_data gp2ap002_platform_data = {
 };
 #endif
 
-#if defined(CONFIG_SENSORS_BMC150) || defined(CONFIG_SENSORS_GP2AP002)
+#if defined(CONFIG_SENSORS_BMC150) || defined(CONFIG_SENSORS_BMA2X2) || defined(CONFIG_SENSORS_GP2AP002)
 
 static struct i2c_board_info __initdata bsc3_i2c_boardinfo[] =
 {
@@ -1126,6 +1163,13 @@ static struct i2c_board_info __initdata bsc3_i2c_boardinfo[] =
         {
         	I2C_BOARD_INFO("bmm050", 0x12),
 		.platform_data = &bss_bmm050,                
+        },
+#endif
+
+#if defined(CONFIG_SENSORS_BMA2X2)
+        {
+        	I2C_BOARD_INFO("bma2x2", 0x18),
+		.platform_data = &bss_bma2x2,
         },
 #endif
 
@@ -1146,14 +1190,15 @@ static struct i2c_board_info __initdata bsc3_i2c_boardinfo[] =
 #define HS_IRQ		gpio_to_irq(121)
 #define HSB_IRQ		BCM_INT_ID_AUXMIC_COMP2
 #define HSB_REL_IRQ	BCM_INT_ID_AUXMIC_COMP2_INV
+#define GPIO_EARMIC_CON (70)
 
 static unsigned int hawaii_button_adc_values_2_1[3][2] = {
 	/* SEND/END Min, Max*/
-	{0,     110},
+	{0,     150},
 	/* Volume Up  Min, Max*/
-	{111,   230},
+	{151,   310},
 	/* Volue Down Min, Max*/
-	{231,   490},
+	{311,   610},
 };
 static struct kona_headset_pd hawaii_headset_data = {
 	/* GPIO state read is 0 on HS insert and 1 for
@@ -1193,6 +1238,8 @@ static struct kona_headset_pd hawaii_headset_data = {
 	 */
 	.button_adc_values_high = hawaii_button_adc_values_2_1,
 	.ldo_id = "audldo_uc",
+	/* GPIO that controls the external LDO needed for 2.8V MICBIAS deprecated  */
+	//.gpio_external_micbias = GPIO_EARMIC_CON,
 };
 #endif /* CONFIG_KONA_HEADSET_MULTI_BUTTON */
 
@@ -2063,7 +2110,7 @@ struct platform_device bcm_vibrator_device = {
 	.name = "vibrator",
 	.id = 0,
 	.dev = {
-		.platform_data="gpldo1_uc",
+		.platform_data="vibldo_uc",
 	},
 };
 #endif
@@ -2153,7 +2200,7 @@ static void __init hawaii_add_i2c_devices(void)
 				ARRAY_SIZE(bcm915500_i2c_boardinfo));
 #endif
 
-#if defined(CONFIG_SENSORS_BMC150) || defined(CONFIG_SENSORS_GP2AP002)
+#if defined(CONFIG_SENSORS_BMC150) || defined (CONFIG_SENSORS_BMA2X2) || defined(CONFIG_SENSORS_GP2AP002)
 	i2c_register_board_info(2, bsc3_i2c_boardinfo, ARRAY_SIZE(bsc3_i2c_boardinfo));
 #endif
 	hawaii_muic_init();
@@ -2325,10 +2372,6 @@ static void __init hawaii_add_devices(void)
 	platform_device_register( &bcm_vibrator_device);
 #endif
 
-#ifdef CONFIG_BACKLIGHT_PWM
-	reset_pwm_padcntrl();
-#endif
-
 }
 
 #ifdef CONFIG_MOBICORE_DRIVER
@@ -2357,7 +2400,7 @@ struct kona_fb_platform_data konafb_devices[] __initdata = {
 			.gpio = 22,
 			.setup = 5,
 			.pulse = 20,
-			.hold = 130000,
+			.hold = 10000,
 			.active = false,
 		},
 		.vmode = true,
@@ -2369,8 +2412,8 @@ struct kona_fb_platform_data konafb_devices[] __initdata = {
 		.width = 480,
 		.height = 800,
 		.fps = 60,
-		.lanes = 2,	
-		.hs_bps = 380000000,
+		.lanes = 2,
+		.hs_bps = 490000000,//350000000
 		.lp_bps = 8000000,
 		.desense_offset = 8000000,
 #ifdef CONFIG_IOMMU_API
