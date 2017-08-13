@@ -240,6 +240,7 @@ struct camdrv_ss_sensor_cap {
 
 	const regs_t *	enterpreview_vga;
 	const regs_t *	preview_50hz_setting;
+	const regs_t *	preview_60hz_setting;
 
 	/* snapshot mode */
 	const regs_t *snapshot_normal_regs;
@@ -484,6 +485,7 @@ struct camdrv_ss_sensor_cap {
 	int  rows_num_vt_mode_regs;
 	int  rows_num_preview_camera_regs;
 	int  rows_num_preview_50hz_setting;
+	int  rows_num_preview_60hz_setting;
 	int rows_num_enterpreview_vga;
 
 

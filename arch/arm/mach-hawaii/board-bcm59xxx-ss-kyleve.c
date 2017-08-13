@@ -97,9 +97,6 @@ static struct bcmpmu59xxx_rw_data __initdata register_init_data[] = {
 	/*  ICCMAX to 1500mA*/
 	{.addr = PMU_REG_MBCCTRL8, .val = 0x0B, .mask = 0xFF},
 
-	/* Set curr to 100mA during boot*/
-	{.addr = PMU_REG_MBCCTRL10, .val = 0x0, .mask = 0xF},
-
         /*  TCXCTRL*/
         {.addr = PMU_REG_TCXLDOCTRL, .val = 0xB8, .mask = 0xFF},
 	/* Set curr to 100mA during boot*/
@@ -135,8 +132,8 @@ static struct bcmpmu59xxx_rw_data __initdata register_init_data[] = {
 /* TODO regulator */
 	{.addr = PMU_REG_FG_EOC_TH, .val = 0x64, .mask = 0xFF},
 
-	/* CS02 Xtal RTC = 22pF */
-	{.addr = PMU_REG_RTC_C2C1_XOTRIM, .val = 0xEE, .mask = 0xFF},
+	/* CS02 Xtal RTC = 13pF */
+	{.addr = PMU_REG_RTC_C2C1_XOTRIM, .val = 0x00, .mask = 0xFF},
 	{.addr = PMU_REG_FGOCICCTRL, .val = 0x02, .mask = 0xFF},
 	 /* FG power down */
 	{.addr = PMU_REG_FGCTRL1, .val = 0x00, .mask = 0xFF},
@@ -171,13 +168,13 @@ static struct bcmpmu59xxx_rw_data __initdata register_init_data[] = {
 	/* MMSR LPM voltage - 0.88V */
 	{.addr = PMU_REG_MMSRVOUT2 , .val = 0x4, .mask = 0x3F},
 	/* SDSR1 NM1 voltage - 1.24V */
-	{.addr = PMU_REG_SDSR1VOUT1 , .val = 0x28, .mask = 0x3F},
+	{.addr = PMU_REG_SDSR1VOUT1 , .val = 0x28, .mask = 0x3F},     // Set to 1.30V for super turbo mode.
 	/* SDSR1 LPM voltage - 0.9V */
 	{.addr = PMU_REG_SDSR1VOUT2 , .val = 0x6, .mask = 0x3F},
 	/* SDSR2 NM1 voltage - 1.24 */
-	{.addr = PMU_REG_SDSR2VOUT1 , .val = 0x28, .mask = 0x3F},
+	{.addr = PMU_REG_SDSR2VOUT1 , .val = 0x28, .mask = 0x3F},     // Set to 1.24V for H/W rev 0.1
 	/* SDSR2 LPM voltage - 1.24V */
-	{.addr = PMU_REG_SDSR2VOUT2 , .val = 0x28, .mask = 0x3F},
+	{.addr = PMU_REG_SDSR2VOUT2 , .val = 0x28, .mask = 0x3F},     // Set to 1.24V for H/W rev 0.1
 	/* IOSR1 LPM voltage - 1.8V */
 	{.addr = PMU_REG_IOSR1VOUT2 , .val = 0x3E, .mask = 0x3F},
 
@@ -744,12 +741,6 @@ struct bcmpmu59xxx_regulator_init_data
 			.pc_pins_map = PCPIN_MAP_ENC(0, PMU_PC2|PMU_PC3),
 			.name = "aud",
 			.req_volt = 0,
-#if defined(CONFIG_MACH_HAWAII_SS_COMMON)
-			.reg_value = 0x01,
-			.reg_value2 = 0x05, /* 0x11 in Capri */
-			.off_value = 0x02,
-			.off_value2 = 0x0a, /* 0x22 in Capri */
-#endif
 		},
 
 		[BCMPMU_REGULATOR_MICLDO] = {
@@ -806,7 +797,6 @@ struct bcmpmu59xxx_regulator_init_data
 			.name = "tcx",
 			.req_volt = 0,
 		},
-	#if 1 //defined(CONFIG_MACH_HAWAII_SS_LOGAN_REV01)
 		[BCMPMU_REGULATOR_LVLDO1] = {
 			.id = BCMPMU_REGULATOR_LVLDO1, /* CAM0_1V8 */
 			.initdata = &bcm59xxx_lvldo1_data,
@@ -815,15 +805,6 @@ struct bcmpmu59xxx_regulator_init_data
 			.name = "lv1",
 			.req_volt = 0,
 		},
-	#else
-		[BCMPMU_REGULATOR_LVLDO1] = {
-			.id = BCMPMU_REGULATOR_LVLDO1,
-			.initdata = &bcm59xxx_lvldo1_data,
-			.pc_pins_map = PCPIN_MAP_ENC(0, 0), /*Not used*/
-			.name = "lv1",
-			.req_volt = 0,
-		},
-	#endif
 		[BCMPMU_REGULATOR_LVLDO2] = {
 			.id = BCMPMU_REGULATOR_LVLDO2,
 			.initdata = &bcm59xxx_lvldo2_data,
@@ -1081,51 +1062,43 @@ struct bcmpmu_acld_pdata acld_pdata = {
 	.otp_cc_trim = 0x1F,
 };
 
-/* SS EB425161 profile */
+
+/* SS B100BE profile */
 /* Logan rev 02 battery profile CSP 626787 */
-static struct batt_volt_cap_map ss_eb425161_volt_cap_lut[] = {
-    {4321, 100},
-    {4250, 95},
-    {4183, 90},
-    {4126, 85},
-    {4082, 80},
-    {4038, 75},
-    {3993, 70},
-    {3952, 65},
-    {3914, 60},
-    {3862, 55},
-    {3826, 50},
-    {3804, 45},
-    {3787, 40},
-    {3775, 35},
-    {3769, 30},
-    {3764, 26},
-    {3746, 21},
-    {3708, 16},
-    {3654, 11},
-    {3647, 10},
-    {3643, 9},
-    {3636, 8},
-    {3628, 7},
-    {3616, 6},
-    {3599, 5},
-    {3578, 4},
-    {3552, 3},
-
-#if 0
-    {3517, 2},
-    {3466, 1},
-    {3400, 0},
-#endif
-
-	{3400, 2},
-	{3360, 1},
-	{3300, 0},
-
-
+static struct batt_volt_cap_map ss_kyleve_volt_cap_lut[] = {
+	{4321, 100},
+	{4250, 95},
+	{4183, 90},
+	{4126, 85},
+	{4082, 80},
+	{4038, 75},
+	{3993, 70},
+	{3952, 65},
+	{3914, 60},
+	{3862, 55},
+	{3826, 50},
+	{3804, 45},
+	{3787, 40},
+	{3775, 35},
+	{3769, 30},
+	{3764, 26},
+	{3746, 21},
+	{3708, 16},
+	{3654, 11},
+	{3647, 10},
+	{3643, 9},
+	{3636, 8},
+	{3628, 7},
+	{3616, 6},
+	{3599, 5},
+	{3578, 4},
+	{3552, 3},
+	{3517, 2},
+	{3466, 1},
+	{3400, 0},
 };
 
-static struct batt_eoc_curr_cap_map ss_eb425161_eoc_cap_lut[] = {
+static struct batt_eoc_curr_cap_map ss_kyleve_eoc_cap_lut[] = {
 	 {290, 90},
 	 {270, 91},
 	 {250, 92},
@@ -1140,17 +1113,11 @@ static struct batt_eoc_curr_cap_map ss_eb425161_eoc_cap_lut[] = {
 	 {0, 100},
 };
 
-static struct batt_cutoff_cap_map ss_eb425161_cutoff_cap_lut[] = {
 
-	{3380, 2},
-	{3340, 1},
-	{3300, 0},
-
-#if 0
+static struct batt_cutoff_cap_map ss_kyleve_cutoff_cap_lut[] = {
 	{3480, 2},
 	{3440, 1},
 	{3400, 0},
-#endif
 };
 
 #if defined(CONFIG_BCMPMU_THERMAL_THROTTLE)
@@ -1161,7 +1128,9 @@ static struct batt_temp_curr_map ys_05_temp_curr_lut[] = {
 };
 #endif
 
-static struct batt_esr_temp_lut ss_eb425161_esr_temp_lut[] = {
+/* SS B100BE profile */
+
+static struct batt_esr_temp_lut ss_kyleve_esr_temp_lut[] = {
 	{
 		.temp = -200,
 		.reset = 0, .fct = 271, .guardband = 50,
@@ -1245,33 +1214,33 @@ static struct batt_esr_temp_lut ss_eb425161_esr_temp_lut[] = {
 	},
 };
 
-/* SS EB425161 profile */
-static struct bcmpmu_batt_property ss_eb425161_props = {
-	.model = "SS EB425161",
-	.min_volt = 3300,
+/* SS B100BE profile */
+static struct bcmpmu_batt_property ss_kyleve_props = {
+	.model = "SS B100BE",
+	.min_volt = 3400,
 	.max_volt = 4350,
 	.full_cap = 1500 * 3600,
 	.one_c_rate = 1500,
-	.volt_cap_lut = ss_eb425161_volt_cap_lut,
-	.volt_cap_lut_sz = ARRAY_SIZE(ss_eb425161_volt_cap_lut),
-	.esr_temp_lut = ss_eb425161_esr_temp_lut,
-	.esr_temp_lut_sz = ARRAY_SIZE(ss_eb425161_esr_temp_lut),
-	.eoc_cap_lut = ss_eb425161_eoc_cap_lut,
-	.eoc_cap_lut_sz = ARRAY_SIZE(ss_eb425161_eoc_cap_lut),
-	.cutoff_cap_lut = ss_eb425161_cutoff_cap_lut,
-	.cutoff_cap_lut_sz = ARRAY_SIZE(ss_eb425161_cutoff_cap_lut),
+	.volt_cap_lut = ss_kyleve_volt_cap_lut,
+	.volt_cap_lut_sz = ARRAY_SIZE(ss_kyleve_volt_cap_lut),
+	.esr_temp_lut = ss_kyleve_esr_temp_lut,
+	.esr_temp_lut_sz = ARRAY_SIZE(ss_kyleve_esr_temp_lut),
+	.eoc_cap_lut = ss_kyleve_eoc_cap_lut,
+	.eoc_cap_lut_sz = ARRAY_SIZE(ss_kyleve_eoc_cap_lut),
+	.cutoff_cap_lut = ss_kyleve_cutoff_cap_lut,
+	.cutoff_cap_lut_sz = ARRAY_SIZE(ss_kyleve_cutoff_cap_lut),
 };
 
-static struct bcmpmu_batt_cap_levels ss_eb425161_cap_levels = {
-	.critical = 2,
+static struct bcmpmu_batt_cap_levels ss_kyleve_cap_levels = {
+	.critical = 5,
 	.low = 15,
 	.normal = 75,
 	.high = 95,
 };
 
-/* SS EB425161 profile */
-static struct bcmpmu_batt_volt_levels ss_eb425161_volt_levels = {
-	.critical = 3380,
+/* SS B100BE profile */
+static struct bcmpmu_batt_volt_levels ss_kyleve_volt_levels = {
+	.critical = 3400,
 	.low = 3500,
 	.normal = 3700,
 	.high   = 4300,
@@ -1281,16 +1250,16 @@ static struct bcmpmu_batt_volt_levels ss_eb425161_volt_levels = {
 	.vfloat_gap = 150, /* in mV */
 };
 
-static struct bcmpmu_batt_cal_data ss_eb425161_cal_data = {
+static struct bcmpmu_batt_cal_data ss_kyleve_cal_data = {
 	.volt_low = 3550,
-	.cap_low = 2, //	e098be3aad24a391f165954e75d550da7596bf04 
+	.cap_low = 5,  /* lower entering low calibration */
 };
 
 static struct bcmpmu_fg_pdata fg_pdata = {
-	.batt_prop = &ss_eb425161_props,
-	.cap_levels = &ss_eb425161_cap_levels,
-	.volt_levels = &ss_eb425161_volt_levels,
-	.cal_data = &ss_eb425161_cal_data,
+	.batt_prop = &ss_kyleve_props,
+	.cap_levels = &ss_kyleve_cap_levels,
+	.volt_levels = &ss_kyleve_volt_levels,
+	.cal_data = &ss_kyleve_cal_data,
 	.sns_resist = 10,
 	.sys_impedence = 33,
 	/* End of charge current in mA */ /* Samsung spec TBD */
@@ -1298,14 +1267,11 @@ static struct bcmpmu_fg_pdata fg_pdata = {
 	/* enable HW EOC of PMU */
 	.hw_maintenance_charging = false,
 	/* floor during sleep from Hawaii HW workshop Dec7 2012 */
-	.sleep_current_ua = 1460,
+	.sleep_current_ua = 1480,
 	.sleep_sample_rate = 32000,
 	.fg_factor = 964, /* KyleVe */
 
-	/* Logan02DS BA100E: May 16 2013 Test.. 989 min err -2.75852 */
-	.fg_factor = 972,
-
-	.poll_rate_low_batt =  30000, /* every 30 seconds */
+	.poll_rate_low_batt =  120000, /* every 120 seconds */
 	.poll_rate_crit_batt = 5000, /* every 5 Seconds */
 	.ntc_high_temp = 680, /*battery too hot shdwn temp*/
 };
@@ -1350,19 +1316,19 @@ struct spa_power_data spa_data = {
 	.suspend_temp_hot   =  600,
 	.recovery_temp_hot  =  400,
 	.suspend_temp_cold  = -50,
-	.recovery_temp_cold = 0,
+	.recovery_temp_cold = 25,
 
 #if defined(CONFIG_SPA_SUPPLEMENTARY_CHARGING)
-	.eoc_current = 140,
-	.backcharging_time = 30, //mins
-	.recharging_eoc = 100,
+	.eoc_current = 150,
+	.backcharging_time = 45, //mins
+	.recharging_eoc = 99,
 #else
 	.eoc_current = 100,
 #endif
 	.recharge_voltage = 4300,
-	.charging_cur_usb = 511,
+	.charging_cur_usb = 510,
 	.charging_cur_cdp_usb = 695,
-	.charging_cur_wall = 551,
+	.charging_cur_wall = 695,
 	.charge_timer_limit = CHARGE_TIMER_6HOUR,
 };
 

@@ -1,10 +1,11 @@
 This is a direct and experimental PORT
 
-NOT WORKING : CAMERA (preview working), GOVERNORS (INTERACTIVE is working ;-) )
+NOT WORKING : CAMERA video recording (preview working), GOVERNORS (INTERACTIVE is working ;-) )
+TODO : fix boot without SMP
 
 ONLY CM-11.0 branch
 
- This port Fix GPU/ION drivers in device (expect Better gpu and memory performance).
+ This port Fix GPU/ION drivers in device (Better GPU and MEMORY performance).
 
 That was the only way i(@eduardoclasheiro) found to fix random reboots on some apps in CM-11.0 .
 

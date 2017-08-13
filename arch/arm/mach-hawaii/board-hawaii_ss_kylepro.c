@@ -2351,28 +2351,57 @@ static void __init hawaii_add_sdio_devices(void)
  */
 struct kona_fb_platform_data konafb_devices[] __initdata = {
 	{
-		.name = "HX8369",
+			.name = "ILI9806",
 		.reg_name = "cam2",
 		.rst =  {
 			.gpio = 22,
 			.setup = 5,
 			.pulse = 20,
-			.hold = 130000,
+			.hold = 10000,
 			.active = false,
 		},
-		.vmode = true,
-		.vburst = true,
-		.cmnd_LP = true,
-		.te_ctrl = false,
+		.vmode = false,
+		.vburst = false,
+			.cmnd_LP = true,
+		.te_ctrl = true,
 		.col_mod_i = 2,  //DISPDRV_FB_FORMAT_xRGB8888
 		.col_mod_o = 2, //DISPDRV_FB_FORMAT_xRGB8888
 		.width = 480,
 		.height = 800,
 		.fps = 60,
-		.lanes = 2,	
-		.hs_bps = 380000000,
-		.lp_bps = 8000000,
-		.desense_offset = 8000000,
+		.lanes = 2,
+			.hs_bps = 300000000,
+		.lp_bps = 5000000,
+#ifdef CONFIG_IOMMU_API
+		.pdev_iommu = &iommu_mm_device,
+#endif
+#ifdef CONFIG_BCM_IOVMM
+		.pdev_iovmm = &iovmm_mm_256mb_device,
+#endif
+	},
+
+	{
+		.name = "NT35510",
+		.reg_name = "cam2",
+		.rst =  {
+			.gpio = 22,
+			.setup = 5,
+			.pulse = 20,
+			.hold = 10000,
+			.active = false,
+		},
+		.vmode = false,
+		.vburst = false,
+		.cmnd_LP = true,
+		.te_ctrl = true,
+		.col_mod_i = 2,  //DISPDRV_FB_FORMAT_xRGB8888
+		.col_mod_o = 2, //DISPDRV_FB_FORMAT_xRGB8888
+		.width = 480,
+		.height = 800,
+		.fps = 60,
+		.lanes = 2,
+		.hs_bps = 500000000,
+		.lp_bps = 5000000,
 #ifdef CONFIG_IOMMU_API
 		.pdev_iommu = &iommu_mm_device,
 #endif
@@ -2385,9 +2414,9 @@ struct kona_fb_platform_data konafb_devices[] __initdata = {
 #include "kona_fb_init.c"
 #endif /* #ifdef CONFIG_FB_BRCM_KONA */
 
-#ifdef CONFIG_LCD_HX8369_SUPPORT
-static struct platform_device hx8369_panel_device = {
-	.name = "HX8369",
+#ifdef CONFIG_LCD_NT35510_SUPPORT
+static struct platform_device nt35510_panel_device = {
+	.name = "nt35510",
 	.id = -1,
 };
 #endif
@@ -2401,8 +2430,8 @@ static void __init hawaii_init(void)
    
 	hawaii_add_common_devices();
 
-#ifdef CONFIG_LCD_HX8369_SUPPORT
-	platform_device_register(&hx8369_panel_device);
+#ifdef CONFIG_LCD_NT35510_SUPPORT
+	platform_device_register(&nt35510_panel_device);
 #endif	
 	return;
 }
@@ -2419,7 +2448,7 @@ static int __init hawaii_add_lateinit_devices(void)
 
 late_initcall(hawaii_add_lateinit_devices);
 
-MACHINE_START(HAWAII, "hawaii_ss_kyleve")
+MACHINE_START(HAWAII, "hawaii_ss_kylepro")
 	.atag_offset = 0x100,
 	.map_io = hawaii_map_io,
 	.init_irq = kona_init_irq,

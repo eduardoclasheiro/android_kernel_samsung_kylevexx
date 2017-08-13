@@ -70,6 +70,11 @@
 #include <mach/hardware.h>
 #include <mach/kona_headset_pd.h>
 #include <mach/kona.h>
+#if defined(CONFIG_BCM2079X_NFC_I2C)
+#include <linux/nfc/bcm2079x.h>
+//different with capri directory tree
+//#include <bcm2079x_nfc_settings.h>
+#endif
 #include <mach/sdio_platform.h>
 #include <mach/hawaii.h>
 #include <mach/io_map.h>
@@ -118,10 +123,6 @@
 
 #ifdef CONFIG_BCM_BT_LPM
 #include <linux/broadcom/bcmbt_lpm.h>
-#endif
-
-#if defined(CONFIG_BCMI2CNFC)
-#include <linux/bcmi2cnfc.h>
 #endif
 
 #if defined  (CONFIG_SENSORS_BMC150) || (CONFIG_SENSORS_BMA2X2)
@@ -189,7 +190,7 @@
 #if defined(CONFIG_RT8969)||defined(CONFIG_RT8973)
 #include <linux/mfd/bcmpmu.h>
 #include <linux/power_supply.h>
-#include <linux/mfd/rt8973.h>
+ #include <linux/mfd/rt8973.h>
 #endif
 
 #ifdef CONFIG_USB_SWITCH_TSU6111
@@ -365,8 +366,8 @@ struct ion_platform_data ion_carveout_data = {
 			.id    = 3,
 			.type  = ION_HEAP_TYPE_CARVEOUT,
 			.name  = "ion-carveout",
-			.base  = 0x90000000,
-			.limit = 0xa0000000,
+			.base  = 0x90000000, //old 0xa0000000
+			.limit = 0xa0000000, //old 0xb0000000
 			.size  = (0 * SZ_1M),
 #ifdef CONFIG_ION_OOM_KILLER
 			.lmk_enable = 0,
@@ -404,8 +405,8 @@ struct ion_platform_data ion_cma_data = {
 			.id = 2,
 			.type  = ION_HEAP_TYPE_DMA,
 			.name  = "ion-cma",
-			.base  = 0x90000000,
-			.limit = 0xa0000000,
+			.base  = 0x90000000, // old 0xa0000000
+			.limit = 0xa0000000, // old 0xb0000000
 			.size  = (0 * SZ_1M),
 #ifdef CONFIG_ION_OOM_KILLER
 			.lmk_enable = 1,
@@ -1121,11 +1122,11 @@ static void gp2ap002_led_onoff(bool onoff)
         int ret=0;
             
 	if (onoff) {	
-                led_regulator = regulator_get(NULL, "vibldo_uc");
+                led_regulator = regulator_get(NULL, "gpldo1_uc");
                 if (IS_ERR(led_regulator)){
                     printk(KERN_ERR "[GP2A] can not get prox_regulator (SENSOR_LED_3.3V) \n");
                 } else {
-                    ret = regulator_set_voltage(led_regulator,3300000,3300000);
+                    ret = regulator_set_voltage(led_regulator,3000000,3000000);
                     printk(KERN_INFO "[GP2A] regulator_set_voltage : %d\n", ret);
                     ret = regulator_enable(led_regulator);
                     printk(KERN_INFO "[GP2A] regulator_enable : %d\n", ret);
@@ -1133,7 +1134,7 @@ static void gp2ap002_led_onoff(bool onoff)
                     mdelay(5);
                 }
 	} else {
-                led_regulator = regulator_get(NULL, "vibldo_uc");
+                led_regulator = regulator_get(NULL, "gpldo1_uc");
 		ret = regulator_disable(led_regulator); 
                 printk(KERN_INFO "[GP2A] regulator_disable : %d\n", ret);
                 regulator_put(led_regulator);
@@ -1190,15 +1191,14 @@ static struct i2c_board_info __initdata bsc3_i2c_boardinfo[] =
 #define HS_IRQ		gpio_to_irq(121)
 #define HSB_IRQ		BCM_INT_ID_AUXMIC_COMP2
 #define HSB_REL_IRQ	BCM_INT_ID_AUXMIC_COMP2_INV
-#define GPIO_EARMIC_CON (70)
 
 static unsigned int hawaii_button_adc_values_2_1[3][2] = {
 	/* SEND/END Min, Max*/
-	{0,     150},
+	{0,     110},
 	/* Volume Up  Min, Max*/
-	{151,   310},
+	{111,   230},
 	/* Volue Down Min, Max*/
-	{311,   610},
+	{231,   490},
 };
 static struct kona_headset_pd hawaii_headset_data = {
 	/* GPIO state read is 0 on HS insert and 1 for
@@ -1238,8 +1238,6 @@ static struct kona_headset_pd hawaii_headset_data = {
 	 */
 	.button_adc_values_high = hawaii_button_adc_values_2_1,
 	.ldo_id = "audldo_uc",
-	/* GPIO that controls the external LDO needed for 2.8V MICBIAS deprecated  */
-	//.gpio_external_micbias = GPIO_EARMIC_CON,
 };
 #endif /* CONFIG_KONA_HEADSET_MULTI_BUTTON */
 
@@ -2372,6 +2370,10 @@ static void __init hawaii_add_devices(void)
 	platform_device_register( &bcm_vibrator_device);
 #endif
 
+#ifdef CONFIG_BACKLIGHT_PWM
+	reset_pwm_padcntrl();
+#endif
+
 }
 
 #ifdef CONFIG_MOBICORE_DRIVER
@@ -2399,7 +2401,7 @@ struct kona_fb_platform_data konafb_devices[] __initdata = {
 		.rst =  {
 			.gpio = 22,
 			.setup = 5,
-			.pulse = 20,
+			.pulse = 200,
 			.hold = 10000,
 			.active = false,
 		},
@@ -2415,7 +2417,6 @@ struct kona_fb_platform_data konafb_devices[] __initdata = {
 		.lanes = 2,
 		.hs_bps = 490000000,//350000000
 		.lp_bps = 8000000,
-		.desense_offset = 8000000,
 #ifdef CONFIG_IOMMU_API
 		.pdev_iommu = &iommu_mm_device,
 #endif
